@@ -11,7 +11,7 @@ public class Player : MonoBehaviour
     private float horizontalScreenSize = 11.5f;
     private float verticalScreenSize = 7.5f;
     private float speed;
-    private int lives;
+    public int lives;
     private int shooting;
     private bool hasShield;
 
@@ -20,6 +20,7 @@ public class Player : MonoBehaviour
     public GameObject bullet;
     public GameObject explosion;
     public GameObject thruster;
+    public GameObject shield;
 
     // Start is called before the first frame update
     void Start()
@@ -42,15 +43,21 @@ public class Player : MonoBehaviour
     {
         horizontalInput = Input.GetAxis("Horizontal");
         verticalInput = Input.GetAxis("Vertical");
-        transform.Translate(new Vector3(horizontalInput, verticalInput,0) * Time.deltaTime * speed);
-        if (transform.position.x > horizontalScreenSize || transform.position.x <= -horizontalScreenSize)
+        Vector3 newPosition = transform.position + new Vector3(horizontalInput, verticalInput, 0) * Time.deltaTime * speed;
+        if (newPosition.x > horizontalScreenSize || newPosition.x <= -horizontalScreenSize)
         {
-            transform.position = new Vector3(transform.position.x * -1, transform.position.y, 0);
+            newPosition = new Vector3(newPosition.x * -1, newPosition.y, 0);
         }
-        if (transform.position.y > verticalScreenSize || transform.position.y < -verticalScreenSize)
+        if (newPosition.y < -verticalScreenSize + 3.5f)
         {
-            transform.position = new Vector3(transform.position.x, transform.position.y * -1, 0);
+            newPosition.y = -verticalScreenSize + 3.5f;
         }
+        else if (newPosition.y > -0.1f)
+        {
+            newPosition.y = -0.1f;
+        }
+
+        transform.position = newPosition;
     }
 
     void Shooting()
@@ -82,8 +89,7 @@ public class Player : MonoBehaviour
             lives--;
         } else if (hasShield == true)
         {
-            //lose the shield
-            //no longer have a shield
+            ShieldLost();
         }
 
         if (lives == 0)
@@ -100,6 +106,7 @@ public class Player : MonoBehaviour
         speed = 6f;
         thruster.gameObject.SetActive(false);
         gameManager.UpdatePowerupText("");
+        gameManager.PlayPowerDown();
     }
 
     IEnumerator ShootingPowerDown()
@@ -107,7 +114,16 @@ public class Player : MonoBehaviour
         yield return new WaitForSeconds(3f);
         shooting = 1;
         gameManager.UpdatePowerupText("");
+        gameManager.PlayPowerDown();
     }
+
+    IEnumerator ShieldPowerDown()
+    {
+        yield return new WaitForSeconds(3f);
+        ShieldLost();
+    }
+
+    
 
     private void OnTriggerEnter2D(Collider2D whatIHit)
     {
@@ -140,9 +156,24 @@ public class Player : MonoBehaviour
                     //shield
                     gameManager.UpdatePowerupText("Picked up Shield!");
                     hasShield = true;
+                    shield.gameObject.SetActive(true);
+                    StartCoroutine(ShieldPowerDown());
                     break;
             }
             Destroy(whatIHit.gameObject);
         }
+    }
+
+    //To be sure not to play the sound twice upon losing a life with shield and then after as the powerup would naturally wear off
+    private void ShieldLost()
+    {
+        if (hasShield == true)
+        {
+            hasShield = false;
+            shield.gameObject.SetActive(false);
+            gameManager.UpdatePowerupText("");
+            gameManager.PlayPowerDown();
+        }
+        
     }
 }

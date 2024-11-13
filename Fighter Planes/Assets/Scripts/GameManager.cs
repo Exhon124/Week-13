@@ -10,8 +10,11 @@ public class GameManager : MonoBehaviour
 
     public GameObject player;
     public GameObject enemyOne;
+    public GameObject enemy2;
     public GameObject cloud;
     public GameObject powerup;
+    public GameObject coin;
+
 
     public AudioClip powerUp;
     public AudioClip powerDown;
@@ -24,14 +27,20 @@ public class GameManager : MonoBehaviour
     public TextMeshProUGUI gameOverText;
     public TextMeshProUGUI restartText;
     public TextMeshProUGUI powerupText;
+    public TextMeshProUGUI livesText;
+    private Player playerScript;
 
     private int score;
 
     // Start is called before the first frame update
     void Start()
     {
-        Instantiate(player, transform.position, Quaternion.identity);
+        GameObject playerInstance = Instantiate(player, transform.position, Quaternion.identity);
+        playerScript = playerInstance.GetComponent<Player>();
+
         InvokeRepeating("CreateEnemyOne", 1f, 3f);
+        InvokeRepeating("CreateEnemy2", 1f, 4f);
+        InvokeRepeating("CreateCoin", 1f, 4f);
         StartCoroutine(CreatePowerup());
         CreateSky();
         score = 0;
@@ -43,6 +52,8 @@ public class GameManager : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
+        livesText.text = "Lives: " + playerScript.lives;
+
         Restart();   
     }
 
@@ -51,11 +62,41 @@ public class GameManager : MonoBehaviour
         Instantiate(enemyOne, new Vector3(Random.Range(-9f, 9f), 7.5f, 0), Quaternion.Euler(0, 0, 180));
     }
 
+    void CreateEnemy2()
+    {
+        // Randomly choose a negative positive or neither number
+        int side = Random.Range(-1, 2);
+        // Use the random number to determine if the entity will start on the left or right
+        if (side == -1)
+        {
+            Instantiate(enemy2, new Vector3(-11, Random.Range(1f, 4f), 0), Quaternion.identity);
+        }
+        else if (side == 1)
+        {
+            Instantiate(enemy2, new Vector3(11, Random.Range(1f, 4f), 0), Quaternion.identity);
+        }
+    }
+
     IEnumerator CreatePowerup()
     {
         Instantiate(powerup, new Vector3(Random.Range(-9f, 9f), 7.5f, 0), Quaternion.identity);
         yield return new WaitForSeconds(Random.Range(3f, 6f));
         StartCoroutine(CreatePowerup());
+    }
+
+    void CreateCoin()
+    {
+        // Randomly choose a negative positive or neither number
+        int side = Random.Range(-1, 2);
+        // Use the random number to determine if the entity will start on the left or right
+        if (side == -1)
+        {
+            Instantiate(coin, new Vector3(-11, Random.Range(-0.1f, -4f), 0), Quaternion.identity);
+        }
+        else if (side == 1)
+        {
+            Instantiate(coin, new Vector3(11, Random.Range(-0.1f, -4f), 0), Quaternion.identity);
+        }
     }
 
     void CreateSky()
